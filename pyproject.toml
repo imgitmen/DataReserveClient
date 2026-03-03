@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DataReserveClient"
+version = "0.1.0"
+authors = [
+  { name="imgitmen", email="it.smi@socotec.com" },
+]
+description = "Python client for Data Reserve"
+readme = "README.md"
+requires-python = ">=3.10.0"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+
+dependencies = [
+    "requests",
+    "pydantic"
+]
+
+[project.urls]
+Homepage = "https://github.com/imgitmen/DataReserveClient"
+
+[tool.setuptools.packages.find]
+where = ["src"]
