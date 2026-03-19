@@ -79,7 +79,7 @@ class HttpClient:
     def __post(self, url, body: dict, t = type) -> RequestResult:
         result = RequestResult[t]
         self.__logger.debug("posting to url {Url}", Url = url)
-        #print(body)
+        #print(body.__dict__)
         response = requests.post(url, data = json.dumps(body), headers={"X-API-Key":self.__apikey})
         result.status_code = response.status_code
         
@@ -90,6 +90,25 @@ class HttpClient:
             else:
                 result.data = response.headers["location"]
         else:
+            if result.status_code != 500:
+                response_json = response.json()
+                self.__add_errors(result, response_json)
+            result.data = None
+        
+        return result
+
+    def __post_data(self, url, body: dict, t = type) -> RequestResult:
+        result = RequestResult[t]
+        self.__logger.debug("posting to url {Url}", Url = url)
+        
+        response = requests.post(url, json = body, headers={"X-API-Key":self.__apikey})
+        result.status_code = response.status_code
+        
+        if response.ok:
+            result.errors = None
+            result.data = True
+        else:
+            self.__logger.debug(f"Error saving data, body was: {json.dumps(body, indent=2)}")
             if result.status_code != 500:
                 response_json = response.json()
                 self.__add_errors(result, response_json)
@@ -174,10 +193,10 @@ class HttpClient:
         return result[1]
         
     @validate_call
-    def save_data(self, data: list[DataItem]) -> RequestResult[UUID]:
+    def save_data(self, data: list[DataItem]) -> RequestResult[bool]:
         url = self.__create_url(endpoint="data")
         data_dict = self.__translate_dataItem_list(data)
-        result = self.__post(url, data_dict, type(str))
+        result = self.__post_data(url, data_dict, type(bool))
         
         return result
 
