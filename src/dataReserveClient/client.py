@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 import json
 import logging
@@ -175,7 +176,26 @@ class HttpClient:
     @validate_call
     def save_data(self, data: list[DataItem]) -> RequestResult[UUID]:
         url = self.__create_url(endpoint="data")
-        result = self.__post(url, data.__dict__, type(str))
+        data_dict = self.__translate_dataItem_list(data)
+        result = self.__post(url, data_dict, type(str))
         
         return result
 
+    def __translate_dataItem_list(self, data: list[DataItem]):
+        grouped = defaultdict(list)
+
+        for item in data:
+            grouped[str(item.SeriesId)].append({
+                "Timestamp": item.Timestamp.isoformat(),
+                "Value": item.Value
+            })
+
+        result = [
+            {
+                "SeriesId": series_id,
+                "Data": data_list
+            }
+            for series_id, data_list in grouped.items()
+        ]
+
+        return result
