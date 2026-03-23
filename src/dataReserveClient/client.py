@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 from pydantic import validate_call
 
 from .classes import DataItem
+from .classes import SeriesStorage
 
 class ValidationError():
     loc: str
@@ -97,7 +98,7 @@ class HttpClient:
         
         return result
 
-    def __post_data(self, url, body: dict, t = type) -> RequestResult:
+    def __post_json(self, url, body: dict, t = type) -> RequestResult:
         result = RequestResult[t]
         self.__logger.debug("posting to url {Url}", Url = url)
         
@@ -160,6 +161,64 @@ class HttpClient:
                 
             result.errors = result_errors
 
+
+    #############################################################
+    ################### SERIES STORAGE ##########################
+    #############################################################
+
+    @validate_call
+    def get_series_storages(self, seriesId: UUID | list[UUID] | None = None, 
+                    storageId: UUID | list[UUID] | None = None, 
+                    databaseName: str | list[str] | None = None, 
+                    tableName: str | list[str] | None = None
+                ) -> RequestResult[list[SeriesStorage]]:
+        
+        kvp = {}
+        
+        if seriesId is not None:
+            kvp["SeriesId"] = seriesId
+
+        if storageId is not None:
+            kvp["StorageId"] = storageId
+            
+        if databaseName is not None:
+            kvp["DatabaseName"] = databaseName
+            
+        if tableName is not None:
+            kvp["TableName"] = tableName
+        
+        url = self.__create_url(endpoint="series_storage", query=kvp)
+        
+        result = self.__get(url, type(list[SeriesStorage]))
+        
+        if result[0].ok:
+            result[1].data = []
+            for d in result[0].json():
+                result[1].data.append(SeriesStorage(**d))
+        
+        return result[1]
+        
+    @validate_call
+    def get_series_storage(self, seriesId: UUID) -> RequestResult[SeriesStorage]:
+        url = self.__create_url(endpoint="series_storage") + str(seriesId)
+        self.__logger.debug("calling url {Url}", Url = url)
+        
+        result = self.__get(url, type(SeriesStorage))
+        
+        if result[0].ok:
+            result[1].data = SeriesStorage(**result[0].json())
+        
+        return result[1]
+    
+    @validate_call
+    def create_update_series_storage(self, seriesId: UUID | str, storageId: UUID | str, databaseName: str, tableName: str) -> RequestResult[UUID]:
+        url = self.__create_url(endpoint="series_storage")
+        result = self.__post(url, {"SeriesId" : str(seriesId), "StorageId": str(storageId), "DatabaseName": databaseName, "TableName": tableName})
+        
+        return result
+
+
+
     #############################################################
     ######################### DATA ##############################
     #############################################################
@@ -188,7 +247,7 @@ class HttpClient:
         if result[0].ok:
             result[1].data = []
             for d in result[0].json():
-                result[1].data.append(d)
+                result[1].data.append(DataItem(**d))
         
         return result[1]
         
@@ -196,7 +255,7 @@ class HttpClient:
     def save_data(self, data: list[DataItem]) -> RequestResult[bool]:
         url = self.__create_url(endpoint="data")
         data_dict = self.__translate_dataItem_list(data)
-        result = self.__post_data(url, data_dict, type(bool))
+        result = self.__post_json(url, data_dict, type(bool))
         
         return result
 
