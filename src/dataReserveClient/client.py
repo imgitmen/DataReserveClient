@@ -19,9 +19,9 @@ class ValidationError():
     type: str   
 
 class RequestResult(Generic[T]):
-    status_code: int
-    errors: list[ValidationError] | None
-    data: T | None
+    status_code: int = 0
+    errors: list[ValidationError] | None = None
+    data: T | None = None
     
 class HttpClient:
     __host: str
@@ -62,7 +62,7 @@ class HttpClient:
         return url
     
     def __get(self, url, t = type) -> tuple[requests.Response, RequestResult]:
-        result = RequestResult[t]
+        result = RequestResult[t]()
         self.__logger.debug("calling url {Url}", Url = url)
         response = requests.get(url, headers={"X-API-Key":self.__apikey})
         result.status_code = response.status_code
@@ -248,6 +248,32 @@ class HttpClient:
             result[1].data = []
             for d in result[0].json():
                 result[1].data.append(DataItem(**d))
+        
+        return result[1]
+        
+    @validate_call
+    def get_data_as_dict(self, seriesId: UUID | list[UUID], 
+                    fromTime: datetime | None = None, 
+                    toTime: datetime | None = None
+                ) -> RequestResult[list[dict]]:
+
+        kvp = {}
+        
+        if seriesId is not None:
+            kvp["SeriesId"] = seriesId
+
+        if fromTime is not None:
+            kvp["FromTime"] = fromTime
+            
+        if toTime is not None:
+            kvp["ToTime"] = toTime
+
+        url = self.__create_url(endpoint="data", query=kvp)
+        
+        result = self.__get(url, type(list[DataItem]))
+        
+        if result[0].ok:
+            result[1].data = result[0].json()
         
         return result[1]
         
