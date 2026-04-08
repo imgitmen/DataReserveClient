@@ -78,6 +78,23 @@ class HttpClient:
         
         return [response, result]
 
+    def __post_get(self, url, body: dict, t = type) -> RequestResult:
+        result = RequestResult[t]
+        self.__logger.debug("posting to url {Url}", Url = url)
+        #print(body.__dict__)
+        response = requests.post(url, data = json.dumps(body), headers={"X-API-Key":self.__apikey})
+        result.status_code = response.status_code
+        
+        if response.ok:
+            result.errors = None
+        else:
+            if response.status_code != 404 and result.status_code != 500:
+                response_json = response.json()
+                self.__add_errors(result, response_json)
+            result.data = None
+        
+        return [response, result]
+
     def __post(self, url, body: dict, t = type) -> RequestResult:
         result = RequestResult[t]
         self.__logger.debug("posting to url {Url}", Url = url)
@@ -228,20 +245,16 @@ class HttpClient:
                     toTime: datetime | None = None
                 ) -> RequestResult[list[DataItem]]:
 
-        kvp = {}
+        url = self.__create_url(endpoint="data/search")
         
-        if seriesId is not None:
-            kvp["SeriesId"] = seriesId
-
-        if fromTime is not None:
-            kvp["FromTime"] = fromTime
-            
-        if toTime is not None:
-            kvp["ToTime"] = toTime
-
-        url = self.__create_url(endpoint="data", query=kvp)
+        if not type(seriesId) is list:
+            seriesId = [str(seriesId)]
+        else:
+            seriesId = [str(x) for x in seriesId]
         
-        result = self.__get(url, type(list[DataItem]))
+        body = { "SeriesId" : seriesId, "FromTime" : fromTime, "ToTime" : toTime }
+                    
+        result = self.__post_get(url, body, type(list[DataItem]))
         
         if result[0].ok:
             result[1].data = []
@@ -256,20 +269,16 @@ class HttpClient:
                     toTime: datetime | None = None
                 ) -> RequestResult[list[dict]]:
 
-        kvp = {}
+        url = self.__create_url(endpoint="data/search")
         
-        if seriesId is not None:
-            kvp["SeriesId"] = seriesId
-
-        if fromTime is not None:
-            kvp["FromTime"] = fromTime
-            
-        if toTime is not None:
-            kvp["ToTime"] = toTime
-
-        url = self.__create_url(endpoint="data", query=kvp)
+        if not type(seriesId) is list:
+            seriesId = [str(seriesId)]
+        else:
+            seriesId = [str(x) for x in seriesId]
         
-        result = self.__get(url, type(list[DataItem]))
+        body = { "SeriesId" : seriesId, "FromTime" : fromTime, "ToTime" : toTime }
+                    
+        result = self.__post_get(url, body, type(list[DataItem]))
         
         if result[0].ok:
             result[1].data = result[0].json()
