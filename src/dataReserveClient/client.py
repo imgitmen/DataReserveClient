@@ -9,11 +9,12 @@ import requests
 from uuid import UUID
 from urllib.parse import urlencode
 from pydantic import validate_call
+from pydantic import BaseModel
 
 from .classes import DataItem
 from .classes import SeriesStorage
 
-class ValidationError():
+class ValidationError(BaseModel):
     loc: str
     msg: str
     type: str   
@@ -153,10 +154,8 @@ class HttpClient:
             result_errors = []
             if errors is not None:
                 for item in errors["detail"]:
-                    validationError = ValidationError()
-                    validationError.loc = item["loc"][-1]
-                    validationError.msg = item["msg"]
-                    validationError.type = item["type"]
+                    validationError = ValidationError(loc=item["loc"][-1], msg=item["msg"], type=item["type"])
+                    
                     result_errors.append(validationError)
                 
             result.errors = result_errors
