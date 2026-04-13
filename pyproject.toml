@@ -4,22 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "DataReserveClient"
-version = "0.1.6"
+version = "0.2.0"
 authors = [
-  { name="imgitmen", email="it.smi@socotec.com" },
+  { name = "imgitmen", email = "it.smi@socotec.com" },
 ]
 description = "Python client for Data Reserve"
 readme = "README.md"
-requires-python = ">=3.10.0"
-license = "MIT"
+requires-python = ">=3.8"
+license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent"
 ]
 
 dependencies = [
-    "requests",
-    "pydantic"
+    "requests>=2.0",
+    "pydantic>=2,<3"
 ]
 
 [project.urls]
